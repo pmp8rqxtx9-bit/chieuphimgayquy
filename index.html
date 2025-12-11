@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Đặt chỗ rạp phim</title>
+</head>
+<body>
+  <h1>Thông tin đặt chỗ</h1>
+  <p>Phim: <span id="phim"></span></p>
+  <p>Suất chiếu: <span id="suat"></span></p>
+  <p>Ghế: <span id="ghe"></span></p>
+
+  <script>
+    const url = new URL(window.location.href);
+    document.getElementById("phim").textContent = url.searchParams.get("phim") || "Chưa có";
+    document.getElementById("suat").textContent = url.searchParams.get("suat") || "Chưa có";
+    document.getElementById("ghe").textContent = url.searchParams.get("ghe") || "Chưa có";
+  </script>
+</body>
+</html>
