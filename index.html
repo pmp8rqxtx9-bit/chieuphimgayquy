@@ -1,378 +1,404 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Đặt chỗ rạp phim</title>
+  <title>Sơ đồ chỗ ngồi - Đặt chỗ</title>
   <style>
+    /* Theme giống ảnh: nền tối, màu xanh lá cho trống, vàng cho đang đặt, xám cho đã đặt */
     :root{
-      --accent:#0b76ef;
-      --seat-size:36px;
+      --bg:#0b0b0d;
+      --panel:#111214;
+      --muted:#a6a6aa;
+      --accent-green:#2ed573;
+      --accent-yellow:#f5b942;
+      --sold:#3b3b3e;
+      --card:#161618;
+      --radius:12px;
     }
-    body{
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      margin:16px;
-      color:#222;
-      background: #f7f9fc;
-    }
-    header{
-      display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-      align-items:center;
-      margin-bottom:18px;
-    }
-    .group{
-      background:#fff;
-      padding:12px;
-      border-radius:8px;
-      box-shadow:0 1px 3px rgba(16,24,40,0.06);
-      display:flex;
-      gap:8px;
-      align-items:center;
-    }
-    label{ font-size:14px; color:#333; min-width:70px; }
-    select, button, input[type="text"]{
-      padding:8px 10px;
-      border:1px solid #d1d9e6;
-      border-radius:6px;
-      font-size:14px;
-      background:white;
-    }
-    .seat-map{
-      margin-top:12px;
-      background:#fff;
-      padding:18px;
-      border-radius:10px;
-      box-shadow:0 1px 6px rgba(16,24,40,0.06);
-    }
-    .screen{
-      text-align:center;
-      padding:8px 12px;
-      background:linear-gradient(90deg,#e6f0ff,#f7fbff);
-      border-radius:8px;
-      color:#064a9c;
-      font-weight:600;
-      margin-bottom:12px;
-    }
-    .seats{
-      display:grid;
-      grid-template-columns: repeat(12, var(--seat-size));
-      gap:8px;
-      justify-content:center;
-      align-items:center;
-    }
+    html,body{height:100%;margin:0;font-family:Inter, Roboto, "Helvetica Neue", Arial,sans-serif;background:var(--bg);color:#fff}
+    .container{max-width:1100px;margin:24px auto;padding:20px}
+    h1{font-size:28px;margin:6px 0 18px}
+    .top-row{display:flex;align-items:center;gap:12px;justify-content:space-between}
+    .legend{display:flex;gap:12px;align-items:center;background:linear-gradient(180deg,#101012,#0c0c0d);padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    .legend .item{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+    .swatch{width:18px;height:18px;border-radius:6px;border:2px solid rgba(255,255,255,0.06);display:inline-block}
+    .swatch.empty{background:transparent;border-color:var(--accent-green);box-shadow:0 0 0 2px rgba(46,213,115,0.06)}
+    .swatch.selected{background:var(--accent-yellow)}
+    .swatch.booked{background:var(--sold)}
+    /* Seat area */
+    .seat-area{margin-top:22px;background:linear-gradient(180deg,#0f0f11,#0b0b0d);padding:28px;border-radius:16px;border:1px solid rgba(255,255,255,0.03)}
+    .screen-btn{display:block;margin:0 auto 18px auto;padding:12px 20px;text-align:center;border-radius:10px;background:#2b2b2e;color:#ddd;width:420px;max-width:90%;box-shadow:inset 0 -3px 0 rgba(0,0,0,0.4)}
+    .seats-grid{display:grid;grid-template-columns:1fr 56px 1fr;gap:10px;align-items:start}
+    .col{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;justify-items:center}
+    .col-right{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;justify-items:center}
+    /* seat button */
     .seat{
-      width:var(--seat-size);
-      height:var(--seat-size);
-      border-radius:6px;
-      display:inline-grid;
-      place-items:center;
-      font-size:12px;
-      cursor:pointer;
-      user-select:none;
-      border:1px solid #cbd6e9;
-      background:linear-gradient(#fff,#f2f6ff);
+      width:56px;height:46px;border-radius:10px;border:2px solid rgba(255,255,255,0.06);
+      background:#0f1113;color:#bfc3c7;display:grid;place-items:center;font-weight:600;cursor:pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 -2px 0 rgba(255,255,255,0.02);
     }
-    .seat.available:hover{ transform:translateY(-2px); box-shadow:0 6px 12px rgba(11,118,239,0.12)}
-    .seat.selected{ background:linear-gradient(#0b76ef,#085fbf); color:#fff; border-color:transparent; }
-    .seat.sold{ background:#e6eaf2; color:#8a95a8; cursor:not-allowed; border-color:#d6dbe8; }
-    .seat.empty{ background:transparent; border:none; cursor:default; }
-    .legend{ display:flex; gap:12px; margin-top:12px; align-items:center; flex-wrap:wrap }
-    .legend .item{ display:flex; gap:6px; align-items:center; font-size:13px; color:#333 }
-    .legend .swatch{ width:18px; height:18px; border-radius:4px; border:1px solid #cbd6e9 }
-    .summary{
-      margin-top:14px;
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .summary .pill{
-      background:#fff;
-      border-radius:8px;
-      padding:10px 12px;
-      box-shadow:0 1px 3px rgba(16,24,40,0.04);
-    }
-    .actions{ margin-left:auto; display:flex; gap:8px; align-items:center; }
-    button.primary{
-      background:var(--accent);
-      color:white;
-      border:none;
-      padding:10px 14px;
-      border-radius:8px;
-      cursor:pointer;
-    }
-    button.secondary{ background:#fff; border:1px solid #d1d9e6; }
-    @media (max-width:640px){
-      .seats{ grid-template-columns: repeat(8, var(--seat-size)); }
-      header{ gap:8px; }
-      label{ min-width:54px; }
+    .seat.empty{background:transparent;border:none;cursor:default;width:12px;height:12px}
+    .seat.available{border-color:rgba(46,213,115,0.15)}
+    .seat.available:hover{transform:translateY(-4px)}
+    .seat.free{border:2px solid rgba(46,213,115,0.9);color:var(--accent-green);background:transparent}
+    .seat.selected{border:2px solid var(--accent-yellow);background:linear-gradient(180deg,#3b2b10,#2f250b);color:#111}
+    .seat.sold{background:var(--sold);color:#6d6e71;border:2px solid rgba(255,255,255,0.03);cursor:not-allowed}
+    /* left info pane & actions */
+    .footer-bar{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:12px}
+    .info{display:flex;gap:12px;align-items:center}
+    .pill{background:#0f1012;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);font-size:14px;color:var(--muted)}
+    .actions{display:flex;gap:8px}
+    .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#ddd}
+    .btn.primary{background:var(--accent-yellow);color:#111}
+    /* Booking view (after select) */
+    .booking-view{display:none;margin-top:20px;background:linear-gradient(180deg,#0e0e10,#0c0c0d);padding:24px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    .booking-header{display:flex;align-items:center;gap:16px;justify-content:space-between}
+    .back{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;cursor:pointer}
+    .booking-card{margin-top:18px;padding:20px;border-radius:12px;background:linear-gradient(180deg,#121214,#0d0d0e);border:1px solid rgba(255,255,255,0.02)}
+    .form-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+    label{font-size:14px;color:var(--muted)}
+    input[type=text], input[type=email], input[type=tel]{background:#0c0c0d;border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:8px;color:#fff}
+    .qr-wrap{margin-top:14px;padding:16px;border-radius:10px;background:#0b0b0d;border:1px solid rgba(255,255,255,0.02)}
+    .qr-img{width:100%;max-width:520px;height:320px;background:
+      linear-gradient(90deg,#ddd 10%, #333 10%) ,
+      linear-gradient(180deg,#ddd 10%, #333 10%);
+      background-size:12px 12px;
+      display:block;border-radius:8px;}
+    .timer{font-weight:700;color:var(--muted)}
+    /* responsive */
+    @media (max-width:880px){
+      .seats-grid{grid-template-columns:1fr;gap:14px}
+      .col, .col-right{grid-template-columns:repeat(6,1fr)}
+      .seat{width:46px;height:40px}
     }
   </style>
 </head>
 <body>
-  <h1>Đặt chỗ rạp phim</h1>
+  <div class="container">
+    <h1>Sơ đồ chỗ ngồi - Sự kiện TWILIGHT CONCERT</h1>
 
-  <header>
-    <div class="group" id="top-selection">
-      <label for="cumrap">Cụm rạp</label>
-      <select id="cumrap" aria-label="Chọn cụm rạp"></select>
+    <div class="top-row">
+      <div class="legend" role="list" aria-label="Chú thích trạng thái ghế">
+        <div class="item"><span class="swatch empty" aria-hidden="true"></span> <span style="color:var(--muted)">Trống</span></div>
+        <div class="item"><span class="swatch selected" aria-hidden="true"></span> <span style="color:var(--muted)">Đang đặt</span></div>
+        <div class="item"><span class="swatch booked" aria-hidden="true"></span> <span style="color:var(--muted)">Đã đặt</span></div>
+      </div>
 
-      <label for="manhinh">Màn hình</label>
-      <select id="manhinh" aria-label="Chọn màn hình"></select>
-
-      <label for="phim">Phim</label>
-      <select id="phim" aria-label="Chọn phim"></select>
-
-      <label for="suat">Suất</label>
-      <select id="suat" aria-label="Chọn suất chiếu"></select>
-    </div>
-  </header>
-
-  <section class="seat-map" aria-labelledby="seatmap-title">
-    <div class="screen" id="screen-label">--- MÀN HÌNH ---</div>
-
-    <div class="seats" id="seats" role="grid" aria-label="Sơ đồ ghế"></div>
-
-    <div class="legend">
-      <div class="item"><span class="swatch" style="background:#fff;border:1px solid #cbd6e9"></span> Ghế trống</div>
-      <div class="item"><span class="swatch" style="background:#0b76ef"></span> Đang chọn</div>
-      <div class="item"><span class="swatch" style="background:#e6eaf2"></span> Đã bán</div>
-    </div>
-
-    <div class="summary" aria-live="polite">
-      <div class="pill">Chọn: <strong id="chosen-count">0</strong> ghế</div>
-      <div class="pill">Ghế: <span id="chosen-list">—</span></div>
-
-      <div class="actions">
-        <button class="secondary" id="reset">Xóa chọn</button>
-        <button class="primary" id="book">Đặt chỗ</button>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="pill">Cụm rạp màn hình</div>
+        <div class="pill timer" id="main-timer">30:00</div>
       </div>
     </div>
-  </section>
+
+    <!-- Seat selection area (ảnh 1) -->
+    <section class="seat-area" id="seat-view" aria-label="Sơ đồ ghế">
+      <div class="screen-btn" role="img" aria-label="màn hình">Cụm rạp màn hình</div>
+
+      <div class="seats-grid" id="seats-grid" aria-hidden="false">
+        <div class="col" id="left-col" aria-label="Bên trái ghế"></div>
+        <div style="display:grid;place-items:center"><div style="width:44px;height:200px"></div></div>
+        <div class="col-right" id="right-col" aria-label="Bên phải ghế"></div>
+      </div>
+
+      <div class="footer-bar">
+        <div class="info">
+          <div class="pill">Chọn: <strong id="chosen-count">0</strong> ghế</div>
+          <div class="pill">Ghế: <span id="chosen-list">—</span></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn secondary" id="reset">Xóa chọn</button>
+          <button class="btn primary" id="proceed" title="Chuyển sang trang đặt chỗ">Tiếp tục</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Booking view (ảnh 2) -->
+    <section class="booking-view" id="booking-view" aria-label="Đặt chỗ">
+      <div class="booking-header">
+        <div style="display:flex;flex-direction:column">
+          <div style="font-size:22px;font-weight:700">Đặt chỗ</div>
+          <div style="color:var(--muted);margin-top:6px">Vị trí: <strong id="booking-seat">—</strong></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="timer" id="booking-timer">29:59</div>
+          <button class="back" id="back-to-seats" aria-label="Quay lại sơ đồ ghế">← Back</button>
+        </div>
+      </div>
+
+      <div class="booking-card">
+        <form id="booking-form" onsubmit="return false">
+          <div class="form-row">
+            <label for="name">Họ và tên</label>
+            <input id="name" type="text" placeholder="Nguyễn Văn A" required />
+          </div>
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="user@example.com" required />
+          </div>
+          <div class="form-row">
+            <label for="phone">Số điện thoại</label>
+            <input id="phone" type="tel" placeholder="0123456789" required />
+          </div>
+
+          <div style="margin-top:14px;font-weight:700">Hướng dẫn thanh toán</div>
+          <div class="qr-wrap">
+            <!-- Placeholder QR style: replace src with real QR in production -->
+            <div class="qr-img" id="qr-image" role="img" aria-label="QR thanh toán"></div>
+            <div style="margin-top:10px;color:var(--muted);font-size:13px">Chuyển khoản tới: <strong>TRAN PHUONG ANH</strong> — 0126163397102</div>
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+            <button class="btn secondary" id="cancel-book">Hủy</button>
+            <button class="btn primary" id="confirm-book">Xác nhận & Thanh toán</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </div>
 
   <script>
-    // Dữ liệu mẫu: cụm rạp -> màn hình -> (danh sách ghế sẵn bán)
-    const data = {
-      "CineStar Vincom": {
-        "IMAX": { sold: ["A1","A2","B3","C4"] },
-        "Standard": { sold: ["D5","E6","B2"] }
-      },
-      "Galaxy Nguyễn Du": {
-        "Galaxy Screen 1": { sold: ["A1","A3","F10"] },
-        "Galaxy Screen 2": { sold: ["C1","C2","C3","C4"] }
-      },
-      "Lotte Cinema": {
-        "Lotte Premium": { sold: [] },
-        "Lotte Screen 2": { sold: ["B1","B2","B3","B4","B5"] }
-      }
-    };
-
-    const movies = ["Chuyến tàu sinh tử", "Người hùng cuối cùng", "Giấc mơ không ngủ"];
-    const suats = ["10:00", "13:30", "16:45", "19:30", "21:45"];
-
-    const cumrapEl = document.getElementById('cumrap');
-    const manhinhEl = document.getElementById('manhinh');
-    const phimEl = document.getElementById('phim');
-    const suatEl = document.getElementById('suat');
-    const seatsEl = document.getElementById('seats');
-    const screenLabelEl = document.getElementById('screen-label');
+    // Cấu hình chỗ: tạo hai cột, các hàng A..O, cột số 1..14 với một hành lang giữa (chia 7 và 7)
+    const ROWS = "ABCDEFGHIJKLMNOPQRST".split('').slice(0,15); // A..O
+    const COLS_PER_SIDE = 7; // 7 ghế mỗi bên per row (giống ảnh)
+    const leftCol = document.getElementById('left-col');
+    const rightCol = document.getElementById('right-col');
     const chosenCountEl = document.getElementById('chosen-count');
     const chosenListEl = document.getElementById('chosen-list');
+    const proceedBtn = document.getElementById('proceed');
     const resetBtn = document.getElementById('reset');
-    const bookBtn = document.getElementById('book');
+    const seatView = document.getElementById('seat-view');
+    const bookingView = document.getElementById('booking-view');
+    const bookingSeatEl = document.getElementById('booking-seat');
+    const backBtn = document.getElementById('back-to-seats');
+    const mainTimerEl = document.getElementById('main-timer');
+    const bookingTimerEl = document.getElementById('booking-timer');
 
-    // Tạo danh sách cụm rạp
-    function populateCine(){
-      cumrapEl.innerHTML = '';
-      Object.keys(data).forEach(name=>{
-        const opt = document.createElement('option');
-        opt.value = name; opt.textContent = name;
-        cumrapEl.appendChild(opt);
-      });
-    }
-    // Tạo màn hình theo cụm rạp
-    function populateScreens(cineName){
-      manhinhEl.innerHTML = '';
-      const screens = Object.keys(data[cineName] || {});
-      screens.forEach(s=>{
-        const opt = document.createElement('option');
-        opt.value = s; opt.textContent = s;
-        manhinhEl.appendChild(opt);
-      });
-    }
-    function populateMovies(){ movies.forEach(m=> { const o=document.createElement('option'); o.value=m; o.textContent=m; phimEl.appendChild(o); }) }
-    function populateSuats(){ suats.forEach(s=> { const o=document.createElement('option'); o.value=s; o.textContent=s; suatEl.appendChild(o); }) }
+    // Mẫu ghế đã đặt (sold)
+    const soldSample = new Set([
+      "A3","A4","B2","C7","D1","F5","G4","H2","I6","K3","L5","M1"
+    ]);
 
-    // Tạo sơ đồ ghế (rows A-F, cols 1-10). Một vài ô là khoảng trống để căn chỉnh.
-    const ROWS = ['A','B','C','D','E','F'];
-    const COLS = 10;
+    // Lưu selection giữa các view
+    let selectedSeats = new Set();
 
-    function renderSeatMap(soldList=[]){
-      seatsEl.innerHTML = '';
-      screenLabelEl.textContent = manhinhEl.value ? `${manhinhEl.value}` : '--- MÀN HÌNH ---';
-      const soldSet = new Set(soldList);
-      // pad left empty col for aisle visual: we'll produce 12 columns but only fill seats for cols 1-10 and two empties
-      for(let r of ROWS){
-        for(let c=0;c<12;c++){
-          const wrapper = document.createElement('div');
-          if(c===0 || c===11){
-            wrapper.className = 'seat empty';
-            wrapper.setAttribute('aria-hidden','true');
-            wrapper.textContent = '';
-            seatsEl.appendChild(wrapper);
-            continue;
-          }
-          const col = c; // 1..10
-          const seatId = r + col;
-          const btn = document.createElement('button');
-          btn.className = 'seat available';
-          btn.type = 'button';
-          btn.textContent = seatId;
-          btn.dataset.seat = seatId;
-          btn.setAttribute('aria-pressed','false');
-          if(soldSet.has(seatId)){
-            btn.className = 'seat sold';
-            btn.disabled = true;
-            btn.setAttribute('aria-label', seatId + ': đã bán');
-          } else {
-            btn.addEventListener('click', toggleSeat);
-            btn.setAttribute('aria-label', seatId + ': ghế trống');
-          }
-          seatsEl.appendChild(btn);
-        }
-      }
-      updateSummary();
+    function seatId(row, idxSide, pos){
+      // idxSide: 'L' or 'R', pos: 1..COLS_PER_SIDE
+      return row + (idxSide === 'L' ? (COLS_PER_SIDE - pos + 1) : (COLS_PER_SIDE + pos));
     }
 
-    // Quản lý chọn ghế
-    function toggleSeat(e){
-      const el = e.currentTarget;
-      if(el.classList.contains('selected')){
-        el.classList.remove('selected');
-        el.setAttribute('aria-pressed','false');
+    function createSeatButton(id, state){
+      const btn = document.createElement('button');
+      btn.className = 'seat';
+      btn.type = 'button';
+      btn.textContent = id;
+      btn.dataset.seat = id;
+      if(state === 'sold'){
+        btn.classList.add('sold');
+        btn.setAttribute('aria-label', id + ': đã đặt');
+        btn.disabled = true;
       } else {
-        el.classList.add('selected');
-        el.setAttribute('aria-pressed','true');
+        btn.classList.add('available');
+        btn.setAttribute('aria-label', id + ': trống');
+        btn.addEventListener('click', onSeatClick);
       }
+      return btn;
+    }
+
+    // Tạo layout giống ảnh: mỗi hàng xuất hiện 7 ghế bên trái và 7 ghế bên phải (đứng theo mẫu A14..A1 left and A1..A13 right)
+    function renderSeats(){
+      leftCol.innerHTML = '';
+      rightCol.innerHTML = '';
+      ROWS.forEach(row => {
+        // create left side (positions 7..1 so they visually match numbering on left)
+        for(let p=1;p<=COLS_PER_SIDE;p++){
+          // map to seat id like E14, E12, ... to simulate numbering in image: here we generate consistent ids
+          const id = row + String(p + COLS_PER_SIDE); // use numbers 8..14 for right mapping cause we need distinct ids across both sides
+          // To mimic image numbering (e.g., A14..A2 left and A1..A13 right) we choose a pattern:
+          // Left side: seats with higher numbers (8..14), Right side: 1..7 (but we show right as 1..7)
+          const leftId = row + String((COLS_PER_SIDE*2) - p + 1); // e.g., 14..8
+          const rightId = row + String(p); // 1..7
+          // Left side seat
+          const leftBtn = soldSample.has(leftId) ? createSeatButton(leftId,'sold') : createSeatButton(leftId,'free');
+          // Right side seat
+          const rightBtn = soldSample.has(rightId) ? createSeatButton(rightId,'sold') : createSeatButton(rightId,'free');
+
+          // For layout, wrap each seat in a small container to keep grid consistent
+          const leftWrap = document.createElement('div'); leftWrap.appendChild(leftBtn);
+          const rightWrap = document.createElement('div'); rightWrap.appendChild(rightBtn);
+
+          leftCol.appendChild(leftWrap);
+          rightCol.appendChild(rightWrap);
+        }
+      });
+      // re-apply selected if any
+      selectedSeats.forEach(s=>{
+        const btn = document.querySelector(`.seat[data-seat="${s}"]`);
+        if(btn && !btn.classList.contains('sold')){
+          btn.classList.add('selected');
+        }
+      });
       updateSummary();
     }
 
-    function getSelectedSeats(){
-      return Array.from(seatsEl.querySelectorAll('.seat.selected')).map(b=>b.dataset.seat);
+    function onSeatClick(e){
+      const btn = e.currentTarget;
+      const id = btn.dataset.seat;
+      if(btn.classList.contains('selected')){
+        btn.classList.remove('selected');
+        selectedSeats.delete(id);
+      } else {
+        // toggle on
+        btn.classList.add('selected');
+        selectedSeats.add(id);
+      }
+      updateSummary();
     }
 
     function updateSummary(){
-      const chosen = getSelectedSeats();
-      chosenCountEl.textContent = chosen.length;
-      chosenListEl.textContent = chosen.length ? chosen.join(', ') : '—';
+      const arr = Array.from(selectedSeats).sort();
+      chosenCountEl.textContent = arr.length;
+      chosenListEl.textContent = arr.length ? arr.join(', ') : '—';
     }
 
     resetBtn.addEventListener('click', ()=>{
-      seatsEl.querySelectorAll('.seat.selected').forEach(s=>{ s.classList.remove('selected'); s.setAttribute('aria-pressed','false'); });
+      selectedSeats.clear();
+      document.querySelectorAll('.seat.selected').forEach(b=>b.classList.remove('selected'));
       updateSummary();
     });
 
-    // Khi đổi cụm rạp -> cập nhật màn hình -> render seat map
-    cumrapEl.addEventListener('change', ()=>{
-      const cine = cumrapEl.value;
-      populateScreens(cine);
-      manhinhEl.dispatchEvent(new Event('change'));
-      saveToUrl();
-    });
-
-    // Khi đổi màn hình -> render seat map theo danh sách sold
-    manhinhEl.addEventListener('change', ()=>{
-      const cine = cumrapEl.value, screen = manhinhEl.value;
-      const sold = (data[cine] && data[cine][screen] && data[cine][screen].sold) ? data[cine][screen].sold : [];
-      renderSeatMap(sold);
-      saveToUrl();
-    });
-
-    // Khi đổi phim/suất -> lưu vào URL
-    phimEl.addEventListener('change', saveToUrl);
-    suatEl.addEventListener('change', saveToUrl);
-
-    // Đặt chỗ: simple demo -> sẽ chuyển đến URL với query params phim, suat, ghe, cumrap, manhinh
-    bookBtn.addEventListener('click', ()=>{
-      const chosen = getSelectedSeats();
-      if(chosen.length === 0){
-        alert('Vui lòng chọn ít nhất 1 ghế trước khi đặt.');
+    // Progress to booking view
+    proceedBtn.addEventListener('click', ()=> {
+      if(selectedSeats.size === 0){
+        alert('Vui lòng chọn ít nhất 1 ghế trước khi tiếp tục.');
         return;
       }
-      const params = new URLSearchParams(window.location.search);
-      params.set('cumrap', cumrapEl.value);
-      params.set('manhinh', manhinhEl.value);
-      params.set('phim', phimEl.value);
-      params.set('suat', suatEl.value);
-      params.set('ghe', chosen.join(','));
-      // Thay vì gửi server, ví dụ redirect tới trang xác nhận cùng query params
-      const url = `${location.pathname}?${params.toString()}`;
-      // dùng replace để không làm dầy lịch sử, trong thực tế có thể gửi lên server
-      location.href = url;
+      // show booking view and fill seat(s)
+      const seatsArr = Array.from(selectedSeats).sort();
+      bookingSeatEl.textContent = seatsArr.join(', ');
+      seatView.style.display = 'none';
+      bookingView.style.display = 'block';
+      // start short booking timer (copy main timer)
+      startBookingTimer(30*60); // 30 minutes in seconds
     });
 
-    // Lưu trạng thái hiện tại vào URL (không reload)
-    function saveToUrl(){
-      const params = new URLSearchParams(window.location.search);
-      params.set('cumrap', cumrapEl.value);
-      params.set('manhinh', manhinhEl.value);
-      params.set('phim', phimEl.value);
-      params.set('suat', suatEl.value);
-      const newUrl = `${location.pathname}?${params.toString()}`;
-      history.replaceState(null, '', newUrl);
-    }
+    backBtn.addEventListener('click', ()=>{
+      bookingView.style.display = 'none';
+      seatView.style.display = 'block';
+      // stop booking timer if any
+      stopBookingTimer();
+    });
 
-    // Load từ URL (nếu có), khởi tạo UI
-    function loadFromUrl(){
-      populateCine();
-      populateMovies();
-      populateSuats();
-
-      const url = new URL(location.href);
-      const qCumrap = url.searchParams.get('cumrap');
-      const qManhinh = url.searchParams.get('manhinh');
-      const qPhim = url.searchParams.get('phim');
-      const qSuat = url.searchParams.get('suat');
-      const qGhe = url.searchParams.get('ghe'); // danh sách ghế
-
-      // chọn cụm rạp nếu có, nếu không chọn mặc định đầu tiên
-      if(qCumrap && data[qCumrap]) cumrapEl.value = qCumrap;
-      else cumrapEl.selectedIndex = 0;
-
-      populateScreens(cumrapEl.value);
-
-      if(qManhinh && data[cumrapEl.value] && data[cumrapEl.value][qManhinh]) manhinhEl.value = qManhinh;
-      else manhinhEl.selectedIndex = 0;
-
-      if(qPhim && movies.includes(qPhim)) phimEl.value = qPhim;
-      else phimEl.selectedIndex = 0;
-
-      if(qSuat && suats.includes(qSuat)) suatEl.value = qSuat;
-      else suatEl.selectedIndex = 0;
-
-      // Render seats, then pre-select from qGhe if possible (ignoring sold)
-      const sold = (data[cumrapEl.value] && data[cumrapEl.value][manhinhEl.value] && data[cumrapEl.value][manhinhEl.value].sold) ? data[cumrapEl.value][manhinhEl.value].sold : [];
-      renderSeatMap(sold);
-
-      if(qGhe){
-        const list = qGhe.split(',').map(s=>s.trim()).filter(Boolean);
-        list.forEach(id=>{
-          const btn = seatsEl.querySelector(`.seat[data-seat="${id}"]`);
-          if(btn && !btn.classList.contains('sold')){
-            btn.classList.add('selected');
-            btn.setAttribute('aria-pressed','true');
-          }
-        });
-        updateSummary();
+    // Booking timer utilities
+    let bookingTimerInterval = null;
+    function startBookingTimer(seconds){
+      stopBookingTimer();
+      let remaining = seconds;
+      function tick(){
+        const mm = String(Math.floor(remaining/60)).padStart(2,'0');
+        const ss = String(remaining%60).padStart(2,'0');
+        bookingTimerEl.textContent = `${mm}:${ss}`;
+        mainTimerEl.textContent = `${mm}:${ss}`;
+        if(remaining <= 0){
+          stopBookingTimer();
+          alert('Hết thời gian giữ ghế. Vui lòng chọn lại.');
+          // cancel booking and go back
+          selectedSeats.clear();
+          document.querySelectorAll('.seat.selected').forEach(b=>b.classList.remove('selected'));
+          updateSummary();
+          bookingView.style.display = 'none';
+          seatView.style.display = 'block';
+        }
+        remaining--;
       }
+      tick();
+      bookingTimerInterval = setInterval(tick,1000);
+    }
+    function stopBookingTimer(){
+      if(bookingTimerInterval) clearInterval(bookingTimerInterval);
+      bookingTimerInterval = null;
     }
 
-    // Khởi tạo
-    loadFromUrl();
+    // Small static main timer shown initially (30:00)
+    (function startMainTimer(){
+      let remaining = 30*60;
+      function t(){
+        const mm = String(Math.floor(remaining/60)).padStart(2,'0');
+        const ss = String(remaining%60).padStart(2,'0');
+        mainTimerEl.textContent = `${mm}:${ss}`;
+        remaining--;
+        if(remaining<0) remaining = 30*60; // loop for demo (not necessary in prod)
+      }
+      t();
+      setInterval(t,1000);
+    })();
 
-    // Nếu muốn thêm behaviour khác (ví dụ gởi server, thanh toán), có thể mở rộng ở đây.
+    // Booking form (simulate confirm)
+    document.getElementById('confirm-book').addEventListener('click', ()=>{
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      if(!name || !email || !phone){
+        alert('Vui lòng điền đầy đủ thông tin liên hệ.');
+        return;
+      }
+      // Simulate booking: mark seats as sold and show QR (or confirmation)
+      Array.from(selectedSeats).forEach(s=>{
+        const btn = document.querySelector(`.seat[data-seat="${s}"]`);
+        if(btn){
+          btn.classList.remove('selected');
+          btn.classList.remove('available');
+          btn.classList.add('sold');
+          btn.disabled = true;
+          btn.removeEventListener('click', onSeatClick);
+        }
+      });
+      // clear selection
+      selectedSeats.clear();
+      updateSummary();
+      alert('Đặt chỗ thành công. Vui lòng thanh toán theo thông tin QR hiển thị.');
+      // For demo we keep booking view visible and show a simple QR pattern (already shown)
+    });
+
+    document.getElementById('cancel-book').addEventListener('click', (e)=>{
+      e.preventDefault();
+      // cancel -> back to seat view and keep selections unchanged
+      bookingView.style.display = 'none';
+      seatView.style.display = 'block';
+      stopBookingTimer();
+    });
+
+    // Simple decorative QR generation (draw a checkerboard-ish pattern in canvas and set it as background)
+    (function generateDecorativeQR(){
+      const canvas = document.createElement('canvas');
+      canvas.width = 520; canvas.height = 320;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      // random-ish black squares to give QR feeling (for demo only)
+      ctx.fillStyle = '#111';
+      for(let x=0;x<26;x++){
+        for(let y=0;y<16;y++){
+          if(Math.random() > 0.7) ctx.fillRect(x*20 + (x%2?3:0), y*20 + (y%2?3:0), 16, 16);
+        }
+      }
+      // add decorative top name box
+      ctx.fillStyle = '#f5f5f7';
+      ctx.fillRect(12,8,200,40);
+      ctx.fillStyle = '#111';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('TRAN PHUONG ANH', 20, 35);
+      const dataUrl = canvas.toDataURL('image/png');
+      const qr = document.getElementById('qr-image');
+      qr.style.backgroundImage = `url(${dataUrl})`;
+      qr.style.backgroundSize = 'cover';
+    })();
+
+    // init
+    renderSeats();
   </script>
 </body>
 </html>
