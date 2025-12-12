@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Xác nhận - Thanh toán</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a href="index.html" class="back">← Back</a>
+    <h1>Đặt chỗ</h1>
+    <div id="timer" class="timer">30:00</div>
+  </header>
+
+  <main class="container narrow">
+    <div class="card">
+      <h2 id="chosenTitle">Vị trí: —</h2>
+
+      <form id="bookingForm">
+        <label>Họ và tên
+          <input id="fullname" type="text" placeholder="Nguyễn Văn A" required />
+        </label>
+
+        <label>Email
+          <input id="email" type="email" placeholder="user@example.com" />
+        </label>
+
+        <label>Số điện thoại
+          <input id="phone" type="tel" placeholder="0123456789" required />
+        </label>
+
+        <h3>Hướng dẫn thanh toán</h3>
+        <div class="payment-card">
+          <img id="qrImage" src="" alt="QR code" />
+          <div class="payment-info">
+            <p>Quét mã QR để thanh toán</p>
+            <p id="amountText">Số tiền: 0 VND</p>
+            <p id="transferNote">Nội dung chuyển khoản: —</p>
+            <p class="hint">Ví dụ: Nguyễn Văn A - 0123456789 - F6 F7 F8</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="cancelBtn" class="btn btn-ghost">Hủy đặt chỗ</button>
+          <button type="submit" id="confirmBtn" class="btn btn-primary">Xác nhận đặt chỗ</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="checkout.js"></script>
+</body>
+</html>

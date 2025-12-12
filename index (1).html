@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Đặt chỗ - Phim (19:30 19/12/2025)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Sơ đồ chỗ ngồi - PHIM X (19:30 • 19/12/2025)</h1>
+  </header>
+
+  <main class="container">
+    <section class="legend">
+      <div class="legend-item"><span class="legend-box available"></span> Trống</div>
+      <div class="legend-item"><span class="legend-box selecting"></span> Đang đặt</div>
+      <div class="legend-item"><span class="legend-box occupied"></span> Đã đặt</div>
+    </section>
+
+    <div class="screen">Cụm rạp màn hình</div>
+
+    <section id="seats-area" class="seats-area">
+      <!-- ghế sẽ render bởi JS -->
+    </section>
+
+    <div class="footer-action">
+      <button id="continueBtn" class="btn btn-primary" disabled>Tiếp tục đặt 0 vé</button>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
